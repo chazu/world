@@ -24,10 +24,6 @@ var imageWidth, imageHeight int
 // How much larger/smaller the draw context is relative to shapefile coordinate space
 var scaleFactorX, scaleFactorY float64
 
-// func translateCoordinate(lat float64, long float64) (float64, float64) {
-// 	//
-// }
-
 func distance(min float64, max float64) float64 {
 	return math.Abs(min - max)
 }
@@ -37,18 +33,16 @@ func main() {
 	imageWidth = 300
 	imageHeight = 300
 	// Open the Shapefile
-	shape, err := shp.Open("ne_110m_land.shp")
-
+	//shape, err := shp.Open("ne_110m_land.shp")
+	shape, err := shp.Open("polygon.shp")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer shape.Close()
 
 	// Create drawing context
-
 	dest := image.NewRGBA(image.Rect(0, 0, imageWidth, imageHeight))
 	gc := draw2dimg.NewGraphicContext(dest)
-
 	gc.SetFillColor(color.RGBA{0xFF, 0xFF, 0xFF, 0xFF})
 	gc.SetStrokeColor(color.RGBA{0x00, 0x00, 0x00, 0xFF})
 	gc.SetLineWidth(3)
@@ -88,15 +82,14 @@ func main() {
 	// loop through all features in the shapefile
 	for shape.Next() {
 		n, p := shape.Shape()
+		// print feature bounding box
 
-		// print feature
 		fmt.Println(reflect.TypeOf(p).Elem(), p.BBox())
 		// print attributes
 		for k, f := range fields {
 			val := shape.ReadAttribute(n, k)
 			fmt.Printf("\t%v: %v\n", f, val)
 
-			fmt.Printf("%v", val)
 		}
 	}
 }

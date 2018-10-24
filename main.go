@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"log"
 	"math"
+	"reflect"
 
 	"github.com/jonas-p/go-shp"
 	"github.com/llgcode/draw2d/draw2dimg"
@@ -17,6 +18,8 @@ var minLat, maxLat float64
 
 var latDistance float64  // The spread of latitude values represented in the shapefile
 var longDistance float64 // The spread of longitude values represented in the shapefile
+
+var imageWidth, imageHeight int
 
 // How much larger/smaller the draw context is relative to shapefile coordinate space
 var scaleFactorX, scaleFactorY float64
@@ -31,6 +34,8 @@ func distance(min float64, max float64) float64 {
 
 func main() {
 
+	imageWidth = 300
+	imageHeight = 300
 	// Open the Shapefile
 	shape, err := shp.Open("ne_110m_land.shp")
 
@@ -41,7 +46,7 @@ func main() {
 
 	// Create drawing context
 
-	dest := image.NewRGBA(image.Rect(0, 0, 300, 300))
+	dest := image.NewRGBA(image.Rect(0, 0, imageWidth, imageHeight))
 	gc := draw2dimg.NewGraphicContext(dest)
 
 	gc.SetFillColor(color.RGBA{0xFF, 0xFF, 0xFF, 0xFF})
@@ -64,19 +69,34 @@ func main() {
 	fmt.Printf("Longitudinal Distance in shapefile: %f\n", longDistance)
 	fmt.Printf("Latitudinal Distance in shapefile: %f\n", latDistance)
 
-	// fields := shape.Fields()
+	// Get the width scale factor (x or longitude)
+	xScaleFactor := float64(imageWidth) / longDistance
+	yScaleFactor := float64(imageHeight) / latDistance
 
-	// // loop through all features in the shapefile
-	// for shape.Next() {
-	// 	n, p := shape.Shape()
+	fmt.Printf("Scale factor for drawing context X: %f\n", xScaleFactor)
+	fmt.Printf("Scale factor for drawing context Y: %f\n", yScaleFactor)
 
-	// 	// print feature
-	// 	fmt.Println(reflect.TypeOf(p).Elem(), p.BBox())
+	// Apply scale factor to graphics context
 
-	// 	// print attributes
-	// 	for k, f := range fields {
-	// 		val := shape.ReadAttribute(n, k)
-	// 		fmt.Printf("\t%v: %v\n", f, val)
-	// 	}
-	// 	fmt.Println()
+	gc.Scale(xScaleFactor, yScaleFactor)
+
+	// Translate coordinate system for graphics context
+	// TODO Maybe?
+
+	fields := shape.Fields()
+
+	// loop through all features in the shapefile
+	for shape.Next() {
+		n, p := shape.Shape()
+
+		// print feature
+		fmt.Println(reflect.TypeOf(p).Elem(), p.BBox())
+		// print attributes
+		for k, f := range fields {
+			val := shape.ReadAttribute(n, k)
+			fmt.Printf("\t%v: %v\n", f, val)
+
+			fmt.Printf("%v", val)
+		}
+	}
 }
